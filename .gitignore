@@ -56,3 +56,6 @@ master.sh
 # Local environment
 .env*
 !.env.example
+/dist/
+.vinext/
+.cloudflare/
