@@ -2,13 +2,21 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   let response = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  // Login page must remain accessible even if configuration is missing.
   if (!url || !key) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    if (pathname === "/admin/login") {
+      return response;
+    }
+
+    return NextResponse.redirect(
+      new URL("/admin/login", request.url)
+    );
   }
 
   const supabase = createServerClient(url, key, {
@@ -30,26 +38,23 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const pathname = request.nextUrl.pathname;
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (pathname === "/admin/login") {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user?.app_metadata?.role === "admin") {
+    if (!error && user?.app_metadata?.role === "admin") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
     return response;
   }
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
   if (error || !user || user.app_metadata?.role !== "admin") {
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("next", "/admin");
+
     return NextResponse.redirect(loginUrl);
   }
 
@@ -57,8 +62,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/admin",
-    "/admin/:path*",
-  ],
+  matcher: ["/admin", "/admin/:path*"],
 };
