@@ -39,3 +39,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SOVEREIGNABHII private backups
+/backup/
+/backups/
+*.tar.gz
+
+# Private audit and development notes
+audit-report.txt
+full-project-audit.txt
+dashboard-code.txt
+homepage-code.txt
+PHASE*-INSTRUCTIONS.txt
+master.sh
+
+# Local environment
+.env*
+!.env.example
